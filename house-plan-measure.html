@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Huj Studios HQ — Measure</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1c1c1e;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 12px 40px;
+    font-family: 'Courier New', monospace;
+    color: #e0e0e0;
+  }
+  h1 {
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #e0e0e0;
+    font-weight: normal;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 10px;
+    color: #777;
+    margin-bottom: 18px;
+    text-align: center;
+    max-width: 480px;
+    letter-spacing: 0.5px;
+  }
+  .plan-card {
+    background: #f4efe6;
+    border-radius: 4px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+    width: 100%;
+    max-width: 480px;
+  }
+  .plan-card svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  /* ── Mode toggle ── */
+  .mode-toggle {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 10px;
+  }
+  .mode-btn {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 9px 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: #26262a;
+    color: #888;
+    cursor: pointer;
+  }
+  .mode-btn.active[data-mode="line"] { border-color: #06b6d4; color: #06b6d4; }
+  .mode-btn.active[data-mode="rect"] { border-color: #8b5cf6; color: #8b5cf6; }
+
+  /* ── Instructions ── */
+  .instructions {
+    width: 100%;
+    max-width: 480px;
+    font-size: 11px;
+    color: #888;
+    margin-top: 12px;
+    text-align: center;
+    letter-spacing: 0.5px;
+    min-height: 28px;
+  }
+
+  /* ── Measurements list ── */
+  .measurements-list {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .empty-state {
+    font-size: 11px;
+    color: #555;
+    text-align: center;
+    padding: 12px 0;
+    border: 1px dashed #333;
+    border-radius: 4px;
+  }
+  .measure-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #26262a;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    padding: 6px 8px;
+  }
+  .measure-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    background: repeating-linear-gradient(45deg, #06b6d4 0 3px, transparent 3px 6px);
+    border: 1px solid #06b6d4;
+  }
+  .measure-swatch.swatch-rect {
+    background: rgba(139,92,246,0.15);
+    border: 1px solid #8b5cf6;
+  }
+  .measure-row input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed #444;
+    color: #ddd;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    padding: 3px 0;
+  }
+  .measure-row input[type="text"]:focus {
+    outline: none;
+    border-bottom-color: #06b6d4;
+  }
+  .measure-dist {
+    font-size: 11px;
+    font-weight: bold;
+    white-space: nowrap;
+    text-align: right;
+  }
+  .measure-dist.line-dist { color: #06b6d4; }
+  .measure-dist.rect-dist { color: #8b5cf6; }
+  .btn-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 3px;
+    color: #888;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .btn-icon:hover { border-color: #e6396c; color: #e6396c; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .btn {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: #26262a;
+    color: #ddd;
+    cursor: pointer;
+  }
+  .btn:hover { border-color: #06b6d4; color: #06b6d4; }
+  .btn-danger:hover { border-color: #e6396c; color: #e6396c; }
+
+  /* ── Save / Load ── */
+  .save-load {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 24px;
+    background: #26262a;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    padding: 14px;
+  }
+  .save-load-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 10px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .save-row, .load-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .save-row input[type="text"], .load-row select {
+    flex: 1;
+    min-width: 0;
+    background: #1c1c1e;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #ddd;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    padding: 8px;
+  }
+  .status {
+    font-size: 10px;
+    color: #888;
+    min-height: 14px;
+    margin-top: 4px;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 24px;
+  }
+  .legend-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 10px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px 18px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .swatch {
+    width: 22px;
+    height: 14px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .legend-text strong {
+    display: block;
+    font-size: 11px;
+    font-weight: normal;
+    color: #ddd;
+  }
+  .legend-text span {
+    font-size: 9.5px;
+    color: #666;
+  }
+</style>
+</head>
+<body>
+
+<h1>Huj Studios HQ — Measure</h1>
+<div class="subtitle">Drag on the plan to add a line or rectangle. Drag any point or shape to move/resize it. Saved sets are shared with anyone who opens this page.</div>
+
+<div class="mode-toggle">
+  <button class="mode-btn active" data-mode="line" id="mode-line">Line</button>
+  <button class="mode-btn" data-mode="rect" id="mode-rect">Rectangle</button>
+  <button class="mode-btn" id="reset-view" title="Reset zoom/pan">⤢ Reset View</button>
+</div>
+
+<div class="plan-card">
+<svg id="plan" viewBox="-48 -40 511 524" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hatch" patternUnits="userSpaceOnUse" width="12" height="6">
+      <rect x="0" y="0" width="12" height="3" fill="#b8593f"/>
+      <rect x="0" y="3" width="12" height="3" fill="#a8503a"/>
+      <rect x="0" y="0" width="12" height="0.6" fill="#d9d0c2"/>
+      <rect x="0" y="3" width="12" height="0.6" fill="#d9d0c2"/>
+      <rect x="11.4" y="0.6" width="0.6" height="2.4" fill="#d9d0c2"/>
+      <rect x="5.4" y="3.6" width="0.6" height="2.4" fill="#d9d0c2"/>
+    </pattern>
+    <!-- Arrowhead — for labels on paper (dark) -->
+    <marker id="arr" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto">
+      <polygon points="0,0 5,2.5 0,5" fill="#888"/>
+    </marker>
+    <marker id="arrR" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto-start-reverse">
+      <polygon points="0,0 5,2.5 0,5" fill="#888"/>
+    </marker>
+    <!-- Small arrowhead for tight spaces on paper -->
+    <marker id="arrS" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto">
+      <polygon points="0,0 4,2 0,4" fill="#333"/>
+    </marker>
+    <marker id="arrSR" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto-start-reverse">
+      <polygon points="0,0 4,2 0,4" fill="#333"/>
+    </marker>
+    <!-- Arrowhead — for labels outside paper (light, on dark bg) -->
+    <marker id="arrW" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto">
+      <polygon points="0,0 5,2.5 0,5" fill="#aaa"/>
+    </marker>
+    <marker id="arrWR" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto-start-reverse">
+      <polygon points="0,0 5,2.5 0,5" fill="#aaa"/>
+    </marker>
+  </defs>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- INTERIOR FLOOR                         -->
+  <!-- ══════════════════════════════════════ -->
+  <polygon points="54.2,54.2 355.2,54.2 334.2,369.2 54.2,369.2" fill="#ede7d9"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- WALLS                                  -->
+  <!-- ══════════════════════════════════════ -->
+
+  <!-- Back wall -->
+  <polygon points="36,36 372,36 355.2,54.2 54.2,54.2"           fill="#a8503a"/>
+  <polygon points="36,36 372,36 355.2,54.2 54.2,54.2"           fill="url(#hatch)"/>
+
+  <!-- Left wall above window -->
+  <polygon points="36,36 54.2,54.2 54.2,178.4 36,178.4"         fill="#a8503a"/>
+  <polygon points="36,36 54.2,54.2 54.2,178.4 36,178.4"         fill="url(#hatch)"/>
+  <!-- Left wall below window -->
+  <polygon points="36,244.9 54.2,244.9 54.2,369.2 36,386"       fill="#a8503a"/>
+  <polygon points="36,244.9 54.2,244.9 54.2,369.2 36,386"       fill="url(#hatch)"/>
+
+  <!-- Right wall above window -->
+  <polygon points="372,36 367.69,140.50 349.52,139.41 355.2,54.2"   fill="#a8503a"/>
+  <polygon points="372,36 367.69,140.50 349.52,139.41 355.2,54.2"   fill="url(#hatch)"/>
+  <!-- Right wall below window -->
+  <polygon points="364.29,191.49 351,386 334.2,369.2 346.12,190.40" fill="#a8503a"/>
+  <polygon points="364.29,191.49 351,386 334.2,369.2 346.12,190.40" fill="url(#hatch)"/>
+
+  <!-- Front wall left of window -->
+  <polygon points="36,386 134.48,386 134.48,369.2 54.2,369.2"     fill="#a8503a"/>
+  <polygon points="36,386 134.48,386 134.48,369.2 54.2,369.2"     fill="url(#hatch)"/>
+  <!-- Front wall between window and door -->
+  <polygon points="198.88,386 236.16,386 236.16,369.2 198.88,369.2" fill="#a8503a"/>
+  <polygon points="198.88,386 236.16,386 236.16,369.2 198.88,369.2" fill="url(#hatch)"/>
+  <!-- Front wall right of door -->
+  <polygon points="302.66,386 351,386 334.2,369.2 302.66,369.2"   fill="#a8503a"/>
+  <polygon points="302.66,386 351,386 334.2,369.2 302.66,369.2"   fill="url(#hatch)"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- WINDOW OPENINGS                        -->
+  <!-- ══════════════════════════════════════ -->
+
+  <!-- Front window -->
+  <rect x="134.48" y="369.2" width="64.4" height="16.8" fill="#9bbfd4"/>
+  <line x1="166.68" y1="369.2" x2="166.68" y2="386" stroke="rgba(255,255,255,0.55)" stroke-width="1.2"/>
+
+  <!-- Left window -->
+  <rect x="36" y="178.4" width="18.2" height="66.5" fill="#9bbfd4"/>
+  <line x1="36" y1="211.7" x2="54.2" y2="211.7" stroke="rgba(255,255,255,0.55)" stroke-width="1.2"/>
+
+  <!-- Right window -->
+  <polygon points="367.69,140.50 364.29,191.49 346.12,190.40 349.52,139.41" fill="#9bbfd4"/>
+  <line x1="358.61" y1="139.96" x2="355.21" y2="190.95" stroke="rgba(255,255,255,0.55)" stroke-width="1.0"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- DOOR                                   -->
+  <!-- ══════════════════════════════════════ -->
+  <rect x="236.16" y="369.2" width="66.5" height="16.8" fill="#d4b08a"/>
+  <path d="M 236.16,369.2 A 66.5,66.5 0 0,0 302.66,369.2"
+        fill="rgba(185,135,85,0.15)" stroke="#8b6040" stroke-width="0.9" stroke-dasharray="4,3"/>
+  <line x1="236.16" y1="302.7" x2="236.16" y2="369.2" stroke="#8b6040" stroke-width="0.9" opacity="0.7"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- CHIMNEY                                -->
+  <!-- ══════════════════════════════════════ -->
+  <rect x="316.7" y="54.2" width="38.5" height="20.3" fill="#a08060"/>
+  <line x1="316.7" y1="61.5" x2="355.2" y2="61.5" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/>
+  <line x1="316.7" y1="68.0" x2="355.2" y2="68.0" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/>
+  <line x1="336.0" y1="54.2" x2="336.0" y2="61.5" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/>
+  <line x1="326.3" y1="61.5" x2="326.3" y2="68.0" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/>
+  <line x1="345.8" y1="61.5" x2="345.8" y2="68.0" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/>
+  <line x1="336.0" y1="68.0" x2="336.0" y2="74.5" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/>
+  <rect x="316.7" y="54.2" width="38.5" height="20.3" fill="none" stroke="#1a1a1a" stroke-width="1.2"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- WALL OUTLINES — OUTER                  -->
+  <!-- ══════════════════════════════════════ -->
+  <line x1="36"    y1="36"    x2="372"   y2="36"    stroke="#1a1a1a" stroke-width="2" stroke-linecap="square"/>
+  <line x1="36"    y1="36"    x2="36"    y2="178.4" stroke="#1a1a1a" stroke-width="2" stroke-linecap="square"/>
+  <line x1="36"    y1="244.9" x2="36"    y2="386"   stroke="#1a1a1a" stroke-width="2" stroke-linecap="square"/>
+  <line x1="372"   y1="36"    x2="367.69" y2="140.50" stroke="#1a1a1a" stroke-width="2" stroke-linecap="square"/>
+  <line x1="364.29" y1="191.49" x2="351"   y2="386"   stroke="#1a1a1a" stroke-width="2" stroke-linecap="square"/>
+  <line x1="36"    y1="386"   x2="134.48" y2="386"   stroke="#1a1a1a" stroke-width="2" stroke-linecap="square"/>
+  <line x1="198.88" y1="386"   x2="236.16" y2="386"   stroke="#1a1a1a" stroke-width="2" stroke-linecap="square"/>
+  <line x1="302.66" y1="386"   x2="351"   y2="386"   stroke="#1a1a1a" stroke-width="2" stroke-linecap="square"/>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- WALL OUTLINES — INNER                  -->
+  <!-- ══════════════════════════════════════ -->
+  <line x1="54.2"  y1="54.2"  x2="316.7" y2="54.2"  stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="54.2"  y1="54.2"  x2="54.2"  y2="178.4" stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="54.2"  y1="244.9" x2="54.2"  y2="369.2" stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="355.2" y1="54.2"  x2="349.52" y2="139.41" stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="346.12" y1="190.40" x2="334.2" y2="369.2" stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="54.2"  y1="369.2" x2="134.48" y2="369.2" stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="198.88" y1="369.2" x2="236.16" y2="369.2" stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="302.66" y1="369.2" x2="334.2" y2="369.2" stroke="#1a1a1a" stroke-width="1.2"/>
+
+  <!-- Jamb lines -->
+  <line x1="134.48" y1="369.2" x2="134.48" y2="386"   stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="198.88" y1="369.2" x2="198.88" y2="386"   stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="236.16" y1="369.2" x2="236.16" y2="386"   stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="302.66" y1="369.2" x2="302.66" y2="386"   stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="36"    y1="178.4" x2="54.2"  y2="178.4" stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="36"    y1="244.9" x2="54.2"  y2="244.9" stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="367.69" y1="140.50" x2="349.52" y2="139.41" stroke="#1a1a1a" stroke-width="1.2"/>
+  <line x1="364.29" y1="191.49" x2="346.12" y2="190.40" stroke="#1a1a1a" stroke-width="1.2"/>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- DIMENSION LINES                                        -->
+  <!-- ══════════════════════════════════════════════════════ -->
+
+  <!-- ── OUTER BACK WIDTH: 4m 80cm ── -->
+  <line x1="36"  y1="36" x2="36"  y2="-8"  stroke="#aaa" stroke-width="0.7"/>
+  <line x1="372" y1="36" x2="372" y2="-8"  stroke="#aaa" stroke-width="0.7"/>
+  <line x1="36"  y1="-16" x2="372" y2="-16" stroke="#aaa" stroke-width="1"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="204" y="-19" text-anchor="middle" font-family="Courier New" font-size="10" fill="#333">4m 80cm</text>
+
+  <!-- ── OUTER FRONT WIDTH: 4m 50cm ── -->
+  <line x1="36"  y1="386" x2="36"  y2="402" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="351" y1="386" x2="351" y2="402" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="36"  y1="402" x2="351" y2="402" stroke="#aaa" stroke-width="1"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="217.52" y="407" text-anchor="middle" font-family="Courier New" font-size="10" fill="#333">4m 50cm</text>
+
+  <!-- ── OUTER DEPTH: 5m 00cm ── -->
+  <line x1="36" y1="36"  x2="-12" y2="36"  stroke="#aaa" stroke-width="0.7"/>
+  <line x1="36" y1="386" x2="-12" y2="386" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="-20" y1="36" x2="-20" y2="386" stroke="#aaa" stroke-width="1"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="-20" y="219" text-anchor="middle" font-family="Courier New" font-size="10" fill="#333"
+        transform="rotate(-90 -20 211)">5m 00cm</text>
+
+  <!-- ── INNER BACK WIDTH: 4m 30cm ── -->
+  <line x1="54.2"  y1="54.2" x2="54.2"  y2="88" stroke="#666" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <line x1="355.2" y1="74.5" x2="355.2" y2="88" stroke="#666" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <line x1="54.2" y1="88" x2="355.2" y2="88" stroke="#444" stroke-width="0.8"
+        marker-start="url(#arrSR)" marker-end="url(#arrS)"/>
+  <rect x="177" y="90" width="56" height="12" rx="1" fill="#ede7d9" opacity="1"/>
+  <text x="205" y="99" text-anchor="middle" font-family="Courier New" font-size="9" fill="#222">4m 30cm</text>
+
+  <!-- ── INNER FRONT WIDTH: 4m 00cm ── -->
+  <line x1="54.2"  y1="369.2" x2="54.2"  y2="354" stroke="#666" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <line x1="334.2" y1="369.2" x2="334.2" y2="354" stroke="#666" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <line x1="54.2" y1="354" x2="334.2" y2="354" stroke="#444" stroke-width="0.8"
+        marker-start="url(#arrSR)" marker-end="url(#arrS)"/>
+  <rect x="168" y="342" width="52" height="12" rx="1" fill="#ede7d9" opacity="1"/>
+  <text x="194" y="351" text-anchor="middle" font-family="Courier New" font-size="9" fill="#222">4m 00cm</text>
+
+  <!-- ── INNER DEPTH: 4m 50cm ── -->
+  <line x1="54.2" y1="54.2"  x2="78" y2="54.2"  stroke="#666" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <line x1="54.2" y1="369.2" x2="78" y2="369.2" stroke="#666" stroke-width="0.6" stroke-dasharray="2,2"/>
+  <line x1="78" y1="54.2" x2="78" y2="369.2" stroke="#444" stroke-width="0.8"
+        marker-start="url(#arrSR)" marker-end="url(#arrS)"/>
+  <rect x="65" y="199" width="52" height="12" rx="1" fill="#ede7d9" opacity="1"/>
+  <text x="91" y="208" text-anchor="middle" font-family="Courier New" font-size="9" fill="#222"
+        transform="rotate(-90 91 212)">4m 50cm</text>
+
+  <!-- ── FRONT WINDOW: 92cm ── -->
+  <line x1="134.48" y1="386" x2="134.48" y2="396" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="198.88" y1="386" x2="198.88" y2="396" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="134.48" y1="396" x2="198.88" y2="396" stroke="#aaa" stroke-width="0.9"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="166.68" y="407" text-anchor="middle" font-family="Courier New" font-size="9" fill="#333">92cm</text>
+
+  <!-- ── FRONT DOOR: 95cm ── -->
+  <line x1="236.16" y1="386" x2="236.16" y2="396" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="302.66" y1="386" x2="302.66" y2="396" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="236.16" y1="396" x2="302.66" y2="396" stroke="#aaa" stroke-width="0.9"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="269.41" y="407" text-anchor="middle" font-family="Courier New" font-size="9" fill="#333">95cm</text>
+
+  <!-- ── LEFT WINDOW: 95cm ── -->
+  <line x1="36" y1="178.4" x2="-22" y2="178.4" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="36" y1="244.9" x2="-22" y2="244.9" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="-30" y1="178.4" x2="-30" y2="244.9" stroke="#aaa" stroke-width="0.9"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="-30" y="218" text-anchor="middle" font-family="Courier New" font-size="9" fill="#333"
+        transform="rotate(-90 -30 211.7)">95cm</text>
+
+  <!-- ── RIGHT WINDOW: 73cm ── -->
+  <line x1="367.69" y1="140.50" x2="380" y2="136" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="364.29" y1="191.49" x2="380" y2="195" stroke="#aaa" stroke-width="0.7"/>
+  <line x1="380" y1="136" x2="380" y2="195" stroke="#aaa" stroke-width="0.9"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="402" y="168" text-anchor="middle" font-family="Courier New" font-size="9" fill="#333">73cm</text>
+
+  <!-- ── WALL THICKNESS: 26cm ── -->
+  <line x1="36"  y1="36"   x2="20" y2="36"   stroke="#aaa" stroke-width="0.6"/>
+  <line x1="54.2" y1="54.2" x2="20" y2="54.2" stroke="#aaa" stroke-width="0.6"/>
+  <line x1="20" y1="36" x2="20" y2="54.2" stroke="#aaa" stroke-width="0.8"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="9" y="46.5" text-anchor="middle" font-family="Courier New" font-size="8" fill="#333">26</text>
+
+  <!-- ── CHIMNEY 55cm wide ── -->
+  <line x1="316.7" y1="54.2" x2="316.7" y2="47" stroke="#aaa" stroke-width="0.6"/>
+  <line x1="355.2" y1="54.2" x2="355.2" y2="47" stroke="#aaa" stroke-width="0.6"/>
+  <line x1="316.7" y1="47" x2="355.2" y2="47" stroke="#aaa" stroke-width="0.8"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="336" y="5.5" text-anchor="middle" font-family="Courier New" font-size="8" fill="#333">55cm</text>
+  <line x1="336" y1="47" x2="336" y2="8" stroke="#aaa" stroke-width="0.5" stroke-dasharray="2,2"/>
+
+  <!-- ── FLOOR AREA LABEL ── -->
+  <text x="194" y="216" text-anchor="middle" font-family="Courier New" font-size="13" fill="#1a1a1a" opacity="0.35">18.68 m²</text>
+
+  <!-- ── CHIMNEY 29cm deep ── -->
+  <line x1="355.2" y1="54.2" x2="362" y2="54.2" stroke="#aaa" stroke-width="0.6"/>
+  <line x1="355.2" y1="74.5" x2="362" y2="74.5" stroke="#aaa" stroke-width="0.6"/>
+  <line x1="362" y1="54.2" x2="362" y2="74.5" stroke="#aaa" stroke-width="0.8"
+        marker-start="url(#arrWR)" marker-end="url(#arrW)"/>
+  <text x="364" y="66.5" text-anchor="start" font-family="Courier New" font-size="8" fill="#333">29cm</text>
+
+  <!-- ── SCALE BAR ── -->
+  <text x="36" y="414" text-anchor="start" font-family="Courier New" font-size="8" fill="#777" letter-spacing="2">SCALE</text>
+  <rect x="36"  y="422" width="35" height="9" fill="#2a2a2a"/>
+  <rect x="71"  y="422" width="35" height="9" fill="#f4efe6" stroke="#2a2a2a" stroke-width="1"/>
+  <rect x="106" y="422" width="35" height="9" fill="#2a2a2a"/>
+  <rect x="141" y="422" width="35" height="9" fill="#f4efe6" stroke="#2a2a2a" stroke-width="1"/>
+  <rect x="36" y="422" width="140" height="9" fill="none" stroke="#2a2a2a" stroke-width="1.2"/>
+  <line x1="36"  y1="418" x2="36"  y2="436" stroke="#2a2a2a" stroke-width="1.2"/>
+  <line x1="106" y1="418" x2="106" y2="436" stroke="#2a2a2a" stroke-width="1.2"/>
+  <line x1="176" y1="418" x2="176" y2="436" stroke="#2a2a2a" stroke-width="1.2"/>
+  <line x1="71"  y1="420" x2="71"  y2="434" stroke="#2a2a2a" stroke-width="0.7"/>
+  <line x1="141" y1="420" x2="141" y2="434" stroke="#2a2a2a" stroke-width="0.7"/>
+  <text x="36"  y="448" text-anchor="middle" font-family="Courier New" font-size="10" fill="#333">0</text>
+  <text x="106" y="448" text-anchor="middle" font-family="Courier New" font-size="10" fill="#333">1m</text>
+  <text x="176" y="448" text-anchor="middle" font-family="Courier New" font-size="10" fill="#333">2m</text>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- MEASUREMENT OVERLAY (JS-driven)        -->
+  <!-- ══════════════════════════════════════ -->
+  <g id="measure-layer"></g>
+
+</svg>
+</div>
+
+<div class="instructions" id="instructions"></div>
+
+<div class="measurements-list" id="measure-list"></div>
+
+<div class="toolbar">
+  <button id="clear-all" class="btn btn-danger">Clear All</button>
+</div>
+
+<!-- SAVE / LOAD -->
+<div class="save-load">
+  <div class="save-load-title">Saved Sets — Shared</div>
+  <div class="save-row">
+    <input type="text" id="set-name" placeholder="Name this set, e.g. Living room furniture">
+    <button id="save-btn" class="btn">Save</button>
+  </div>
+  <div class="load-row">
+    <select id="set-select">
+      <option value="">— choose a saved set —</option>
+    </select>
+    <button id="load-btn" class="btn">Load</button>
+    <button id="delete-set-btn" class="btn btn-danger">Delete</button>
+  </div>
+  <div class="status" id="save-status"></div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-grid">
+    <div class="legend-item">
+      <div class="swatch" style="background:#b8593f; background-image: repeating-linear-gradient(to bottom, #d9d0c2 0, #d9d0c2 1px, transparent 1px, transparent 7px), repeating-linear-gradient(to right, transparent 0, transparent 13px, #d9d0c2 13px, #d9d0c2 14px);"></div>
+      <div class="legend-text"><strong>Walls</strong><span>26cm thick</span></div>
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:#ede7d9;"></div>
+      <div class="legend-text"><strong>Interior Floor</strong><span>Open area</span></div>
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:#9bbfd4;"></div>
+      <div class="legend-text"><strong>Windows</strong><span>Glazed opening</span></div>
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:#d4b08a;"></div>
+      <div class="legend-text"><strong>Door</strong><span>Front entry, inward swing</span></div>
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:#a08060;"></div>
+      <div class="legend-text"><strong>Chimney</strong><span>55 × 29cm</span></div>
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:repeating-linear-gradient(45deg,#06b6d4 0 3px, transparent 3px 6px); border:1px solid #06b6d4;"></div>
+      <div class="legend-text"><strong>Line</strong><span>Drag to draw &amp; drag ends to edit</span></div>
+    </div>
+    <div class="legend-item">
+      <div class="swatch" style="background:rgba(139,92,246,0.15); border:1px solid #8b5cf6;"></div>
+      <div class="legend-text"><strong>Rectangle</strong><span>Drag corners to resize</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const svg = document.getElementById('plan');
+  const layer = document.getElementById('measure-layer');
+  const NS = 'http://www.w3.org/2000/svg';
+  const SCALE = 0.7;              // svg units per cm (matches the plan's scale bar)
+  const SAVE_PREFIX = 'huj-measure:';
+  const HIT_R = 12;                // handle hit radius, in svg units (generous for touch)
+  const BODY_HIT = 7;              // line body hit distance, in svg units
+  const MIN_SIZE = 4;              // minimum drag size (svg units) to create a shape
+
+  // ── Storage backend ──
+  // This file auto-detects where it's running:
+  //  - Inside Claude.ai, window.storage is available -> uses Claude's
+  //    built-in shared artifact storage (no setup needed).
+  //  - Self-hosted (e.g. the Cloudflare Worker in this project), window.storage
+  //    is not available -> calls the same-origin /api/sets endpoint instead.
+
+  let shapes = [];      // {id, type:'line'|'rect', ...geometry, label}
+  let idCounter = 1;
+  let mode = 'line';     // 'line' | 'rect'
+  let drag = null;
+
+  // ── Zoom / pan state ──
+  const BASE_VB = { x: -48, y: -40, w: 511, h: 524 }; // original viewBox
+  const ASPECT = BASE_VB.h / BASE_VB.w;
+  const MAX_W = BASE_VB.w;       // most zoomed-out (= original view)
+  const MIN_W = BASE_VB.w / 6;   // most zoomed-in (6x)
+  let viewBox = { ...BASE_VB };
+  const activePointers = new Map(); // pointerId -> {x, y} (client coords)
+  let pinch = null; // {startDist, startVB, startMidSVG}
+
+  function applyViewBox() {
+    svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+  }
+  function resetView() {
+    viewBox = { ...BASE_VB };
+    applyViewBox();
+  }
+  function clampViewBoxSize(w) {
+    return Math.min(MAX_W, Math.max(MIN_W, w));
+  }
+
+  // ── Coordinate conversion ──
+  function svgPoint(evt) {
+    const rect = svg.getBoundingClientRect();
+    const x = viewBox.x + (evt.clientX - rect.left) / rect.width * viewBox.w;
+    const y = viewBox.y + (evt.clientY - rect.top) / rect.height * viewBox.h;
+    return { x, y };
+  }
+
+  // ── Distance formatting (matches "Xm Ycm" style of the plan) ──
+  function fmtCm(svgDist) {
+    const cm = svgDist / SCALE;
+    if (cm >= 100) {
+      const m = Math.floor(cm / 100);
+      const rem = Math.round((cm - m * 100) * 10) / 10;
+      return rem === 0 ? `${m}m` : `${m}m ${rem}cm`;
+    }
+    return `${Math.round(cm * 10) / 10}cm`;
+  }
+
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+  function distToSeg(p, a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    if (len2 === 0) return dist(p, a);
+    let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    return dist(p, { x: a.x + t * dx, y: a.y + t * dy });
+  }
+
+  // ── Shape geometry helpers ──
+  function getHandles(s) {
+    if (s.type === 'line') return [{ x: s.x1, y: s.y1, k: 'p1' }, { x: s.x2, y: s.y2, k: 'p2' }];
+    return [
+      { x: s.x,       y: s.y,       k: 'tl' },
+      { x: s.x + s.w, y: s.y,       k: 'tr' },
+      { x: s.x,       y: s.y + s.h, k: 'bl' },
+      { x: s.x + s.w, y: s.y + s.h, k: 'br' }
+    ];
+  }
+  function oppositeAnchor(s, k) {
+    switch (k) {
+      case 'tl': return { x: s.x + s.w, y: s.y + s.h };
+      case 'tr': return { x: s.x,       y: s.y + s.h };
+      case 'bl': return { x: s.x + s.w, y: s.y };
+      case 'br': return { x: s.x,       y: s.y };
+    }
+  }
+
+  // ── Hit testing ──
+  function findHandleHit(p) {
+    for (let i = shapes.length - 1; i >= 0; i--) {
+      for (const h of getHandles(shapes[i])) {
+        if (dist(p, h) < HIT_R) return { idx: i, key: h.k };
+      }
+    }
+    return null;
+  }
+  function findBodyHit(p) {
+    for (let i = shapes.length - 1; i >= 0; i--) {
+      const s = shapes[i];
+      if (s.type === 'rect') {
+        if (p.x >= s.x - 2 && p.x <= s.x + s.w + 2 && p.y >= s.y - 2 && p.y <= s.y + s.h + 2) return i;
+      } else {
+        if (distToSeg(p, { x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 }) < BODY_HIT) return i;
+      }
+    }
+    return null;
+  }
+
+  // ── SVG element helper ──
+  function addEl(tag, attrs) {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    layer.appendChild(el);
+    return el;
+  }
+
+  function addLabel(x, y, text, color) {
+    const approxW = text.length * 4.4 + 4;
+    addEl('rect', { x: x - approxW / 2, y: y - 10, width: approxW, height: 9, fill: '#f4efe6', stroke: color, 'stroke-width': 0.5, rx: 1 });
+    const t = addEl('text', { x, y: y - 3, 'text-anchor': 'middle', 'font-family': 'Courier New', 'font-size': 8, 'font-weight': 'bold', fill: color });
+    t.textContent = text;
+  }
+
+  // ── Rendering ──
+  function drawShape(s, preview) {
+    if (s.type === 'line') {
+      const color = '#06b6d4', textColor = '#0891b2';
+      addEl('line', { x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2, stroke: color, 'stroke-width': 1.5, 'stroke-dasharray': preview ? '2,2' : '4,2', opacity: preview ? 0.6 : 1 });
+      if (!preview) {
+        [[s.x1, s.y1], [s.x2, s.y2]].forEach(([x, y]) => addEl('circle', { cx: x, cy: y, r: 3, fill: color, stroke: '#f4efe6', 'stroke-width': 0.8 }));
+      }
+      const mx = (s.x1 + s.x2) / 2, my = (s.y1 + s.y2) / 2;
+      const d = dist({ x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 });
+      addLabel(mx, my, `${s.label}: ${fmtCm(d)}`, textColor);
+    } else {
+      const color = '#8b5cf6', textColor = '#6d28d9';
+      addEl('rect', { x: s.x, y: s.y, width: s.w, height: s.h, fill: 'rgba(139,92,246,0.12)', stroke: color, 'stroke-width': 1.5, 'stroke-dasharray': preview ? '2,2' : 'none' });
+      if (!preview) {
+        getHandles(s).forEach(h => addEl('rect', { x: h.x - 2.5, y: h.y - 2.5, width: 5, height: 5, fill: color, stroke: '#f4efe6', 'stroke-width': 0.6 }));
+      }
+      const areaM2 = ((s.w / SCALE) * (s.h / SCALE) / 10000).toFixed(2);
+      addLabel(s.x + s.w / 2, s.y + s.h / 2, `${s.label}: ${fmtCm(s.w)} × ${fmtCm(s.h)} (${areaM2}m²)`, textColor);
+    }
+  }
+
+  function renderSvg() {
+    layer.innerHTML = '';
+    shapes.forEach(s => drawShape(s, false));
+    if (drag && drag.kind === 'new') {
+      const a = drag.start, b = drag.current;
+      if (mode === 'line') {
+        drawShape({ type: 'line', x1: a.x, y1: a.y, x2: b.x, y2: b.y, label: 'New' }, true);
+      } else {
+        drawShape({ type: 'rect', x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(b.x - a.x), h: Math.abs(b.y - a.y), label: 'New' }, true);
+      }
+    }
+  }
+
+  function renderList() {
+    const listEl = document.getElementById('measure-list');
+    listEl.innerHTML = '';
+    if (shapes.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">No shapes yet — drag on the plan to add one.</div>';
+      return;
+    }
+    shapes.forEach((s, i) => {
+      const row = document.createElement('div');
+      row.className = 'measure-row';
+
+      const swatch = document.createElement('div');
+      swatch.className = s.type === 'rect' ? 'measure-swatch swatch-rect' : 'measure-swatch';
+
+      const labelInput = document.createElement('input');
+      labelInput.type = 'text';
+      labelInput.value = s.label;
+      labelInput.addEventListener('input', e => { s.label = e.target.value; renderSvg(); });
+
+      const distSpan = document.createElement('div');
+      distSpan.className = s.type === 'rect' ? 'measure-dist rect-dist' : 'measure-dist line-dist';
+      if (s.type === 'line') {
+        distSpan.textContent = fmtCm(dist({ x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 }));
+      } else {
+        const areaM2 = ((s.w / SCALE) * (s.h / SCALE) / 10000).toFixed(2);
+        distSpan.textContent = `${fmtCm(s.w)} × ${fmtCm(s.h)} · ${areaM2}m²`;
+      }
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-icon';
+      delBtn.textContent = '×';
+      delBtn.title = 'Remove';
+      delBtn.addEventListener('click', () => { shapes.splice(i, 1); render(); });
+
+      row.append(swatch, labelInput, distSpan, delBtn);
+      listEl.appendChild(row);
+    });
+  }
+
+  function updateInstructions() {
+    const el = document.getElementById('instructions');
+    if (drag && drag.kind === 'new') {
+      el.textContent = mode === 'line' ? 'Release to place the line.' : 'Release to place the rectangle.';
+    } else if (drag && drag.kind === 'handle') {
+      el.textContent = 'Resizing — release to finish.';
+    } else if (drag && drag.kind === 'move') {
+      el.textContent = 'Moving — release to finish.';
+    } else if (mode === 'line') {
+      el.textContent = 'Drag on the plan to add a line. Drag an end point to move it, or drag the line to move both ends.';
+    } else {
+      el.textContent = 'Drag on the plan to add a rectangle. Drag a corner to resize, or drag inside it to move it.';
+    }
+  }
+
+  function render() {
+    renderSvg();
+    renderList();
+    updateInstructions();
+  }
+
+  // ── Pointer interaction ──
+  // Single pointer  -> draw / edit shapes (existing behaviour)
+  // Two pointers    -> pinch to zoom, drag to pan (cancels any in-progress shape drag)
+  svg.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (activePointers.size >= 2) {
+      // Entering pinch/pan — abandon any single-pointer drag without committing it
+      drag = null;
+      const pts = [...activePointers.values()].slice(0, 2);
+      const d = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      pinch = {
+        startDist: Math.max(d, 1),
+        startVB: { ...viewBox },
+        startMidSVG: svgPoint({ clientX: mid.x, clientY: mid.y })
+      };
+      render();
+      return;
+    }
+
+    // Single pointer: existing draw/edit logic
+    const p = svgPoint(e);
+    const hh = findHandleHit(p);
+    if (hh) {
+      const s = shapes[hh.idx];
+      drag = { kind: 'handle', idx: hh.idx, key: hh.key, anchor: s.type === 'rect' ? oppositeAnchor(s, hh.key) : null };
+      render();
+      return;
+    }
+    const bh = findBodyHit(p);
+    if (bh !== null) {
+      const s = shapes[bh];
+      drag = {
+        kind: 'move', idx: bh, start: p,
+        orig: s.type === 'line' ? { x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2 } : { x: s.x, y: s.y }
+      };
+      render();
+      return;
+    }
+    drag = { kind: 'new', start: p, current: p };
+    render();
+  });
+
+  window.addEventListener('pointermove', e => {
+    if (!activePointers.has(e.pointerId)) return;
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    e.preventDefault();
+
+    if (activePointers.size >= 2 && pinch) {
+      const pts = [...activePointers.values()].slice(0, 2);
+      const d = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      const scale = pinch.startDist / Math.max(d, 1);
+      const newW = clampViewBoxSize(pinch.startVB.w * scale);
+      const newH = newW * ASPECT;
+      const rect = svg.getBoundingClientRect();
+      const fracX = (mid.x - rect.left) / rect.width;
+      const fracY = (mid.y - rect.top) / rect.height;
+      viewBox = {
+        w: newW, h: newH,
+        x: pinch.startMidSVG.x - fracX * newW,
+        y: pinch.startMidSVG.y - fracY * newH
+      };
+      applyViewBox();
+      return;
+    }
+
+    if (activePointers.size === 1 && drag) {
+      const p = svgPoint(e);
+      if (drag.kind === 'handle') {
+        const s = shapes[drag.idx];
+        if (s.type === 'line') {
+          if (drag.key === 'p1') { s.x1 = p.x; s.y1 = p.y; } else { s.x2 = p.x; s.y2 = p.y; }
+        } else {
+          const a = drag.anchor;
+          s.x = Math.min(a.x, p.x); s.y = Math.min(a.y, p.y);
+          s.w = Math.abs(p.x - a.x); s.h = Math.abs(p.y - a.y);
+        }
+      } else if (drag.kind === 'move') {
+        const s = shapes[drag.idx];
+        const dx = p.x - drag.start.x, dy = p.y - drag.start.y;
+        if (s.type === 'line') {
+          s.x1 = drag.orig.x1 + dx; s.y1 = drag.orig.y1 + dy;
+          s.x2 = drag.orig.x2 + dx; s.y2 = drag.orig.y2 + dy;
+        } else {
+          s.x = drag.orig.x + dx; s.y = drag.orig.y + dy;
+        }
+      } else if (drag.kind === 'new') {
+        drag.current = p;
+      }
+      render();
+    }
+  });
+
+  function endDrag() {
+    if (!drag) return;
+    if (drag.kind === 'new') {
+      const a = drag.start, b = drag.current;
+      const w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
+      if (Math.hypot(w, h) >= MIN_SIZE) {
+        if (mode === 'line') {
+          shapes.push({ id: idCounter, type: 'line', x1: a.x, y1: a.y, x2: b.x, y2: b.y, label: `Line ${idCounter}` });
+        } else {
+          shapes.push({ id: idCounter, type: 'rect', x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w, h, label: `Shape ${idCounter}` });
+        }
+        idCounter++;
+      }
+    }
+    drag = null;
+    render();
+  }
+
+  function onPointerUp(e) {
+    activePointers.delete(e.pointerId);
+    if (activePointers.size < 2) pinch = null;
+    if (activePointers.size === 0) endDrag();
+  }
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerUp);
+
+  // ── Mouse wheel / trackpad zoom (desktop) ──
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect = svg.getBoundingClientRect();
+    const fracX = (e.clientX - rect.left) / rect.width;
+    const fracY = (e.clientY - rect.top) / rect.height;
+    const pointSVG = svgPoint(e);
+    const factor = e.deltaY > 0 ? 1.12 : 1 / 1.12;
+    const newW = clampViewBoxSize(viewBox.w * factor);
+    const newH = newW * ASPECT;
+    viewBox = {
+      w: newW, h: newH,
+      x: pointSVG.x - fracX * newW,
+      y: pointSVG.y - fracY * newH
+    };
+    applyViewBox();
+  }, { passive: false });
+
+  // ── Mode toggle ──
+  const modeLineBtn = document.getElementById('mode-line');
+  const modeRectBtn = document.getElementById('mode-rect');
+  function setMode(m) {
+    mode = m;
+    modeLineBtn.classList.toggle('active', m === 'line');
+    modeRectBtn.classList.toggle('active', m === 'rect');
+    updateInstructions();
+  }
+  modeLineBtn.addEventListener('click', () => setMode('line'));
+  modeRectBtn.addEventListener('click', () => setMode('rect'));
+  document.getElementById('reset-view').addEventListener('click', resetView);
+
+  // ── Clear all ──
+  document.getElementById('clear-all').addEventListener('click', () => {
+    shapes = [];
+    drag = null;
+    render();
+  });
+
+  // ── Storage abstraction (auto-detects Claude vs self-hosted API) ──
+  const USE_CLAUDE_STORAGE = (typeof window.storage !== 'undefined');
+
+  async function listSets() {
+    if (!USE_CLAUDE_STORAGE) {
+      const res = await fetch('/api/sets');
+      if (!res.ok) throw new Error('list failed');
+      const data = await res.json();
+      return data.names || [];
+    }
+    const res = await window.storage.list(SAVE_PREFIX, true);
+    return (res?.keys || []).map(k => k.slice(SAVE_PREFIX.length));
+  }
+  async function loadSetData(name) {
+    if (!USE_CLAUDE_STORAGE) {
+      const res = await fetch(`/api/sets/${encodeURIComponent(name)}`);
+      if (!res.ok) throw new Error('not found');
+      return await res.json();
+    }
+    const res = await window.storage.get(SAVE_PREFIX + name, true);
+    return res ? JSON.parse(res.value) : null;
+  }
+  async function saveSetData(name, data) {
+    if (!USE_CLAUDE_STORAGE) {
+      const res = await fetch(`/api/sets/${encodeURIComponent(name)}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+      });
+      return res.ok;
+    }
+    const res = await window.storage.set(SAVE_PREFIX + name, JSON.stringify(data), true);
+    return !!res;
+  }
+  async function deleteSetData(name) {
+    if (!USE_CLAUDE_STORAGE) {
+      const res = await fetch(`/api/sets/${encodeURIComponent(name)}`, { method: 'DELETE' });
+      return res.ok;
+    }
+    await window.storage.delete(SAVE_PREFIX + name, true);
+    return true;
+  }
+
+  const statusEl = document.getElementById('save-status');
+
+  async function refreshSets() {
+    const sel = document.getElementById('set-select');
+    sel.innerHTML = '<option value="">— choose a saved set —</option>';
+    try {
+      const names = await listSets();
+      names.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+    } catch (e) {
+      statusEl.textContent = 'Shared storage unavailable in this view.';
+    }
+  }
+
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const nameInput = document.getElementById('set-name');
+    const name = nameInput.value.trim();
+    if (!name) { statusEl.textContent = 'Enter a name for this set first.'; return; }
+    try {
+      const ok = await saveSetData(name, shapes);
+      if (ok) {
+        statusEl.textContent = `Saved "${name}" — visible to anyone with this link.`;
+        nameInput.value = '';
+        await refreshSets();
+      } else {
+        statusEl.textContent = 'Save failed, try again.';
+      }
+    } catch (e) {
+      statusEl.textContent = 'Could not save — shared storage unavailable.';
+    }
+  });
+
+  document.getElementById('load-btn').addEventListener('click', async () => {
+    const sel = document.getElementById('set-select');
+    const name = sel.value;
+    if (!name) { statusEl.textContent = 'Choose a saved set to load.'; return; }
+    try {
+      const data = await loadSetData(name);
+      if (data) {
+        shapes = data.map(s => ({ ...s, type: s.type || 'line' }));
+        idCounter = shapes.reduce((mx, s) => Math.max(mx, s.id || 0), 0) + 1;
+        drag = null;
+        render();
+        statusEl.textContent = `Loaded "${name}".`;
+      }
+    } catch (e) {
+      statusEl.textContent = 'Could not load — shared storage unavailable.';
+    }
+  });
+
+  document.getElementById('delete-set-btn').addEventListener('click', async () => {
+    const sel = document.getElementById('set-select');
+    const name = sel.value;
+    if (!name) { statusEl.textContent = 'Choose a saved set to delete.'; return; }
+    try {
+      await deleteSetData(name);
+      statusEl.textContent = `Deleted "${name}".`;
+      await refreshSets();
+    } catch (e) {
+      statusEl.textContent = 'Could not delete — shared storage unavailable.';
+    }
+  });
+
+  // ── Init ──
+  render();
+  refreshSets();
+})();
+</script>
+
+</body>
+</html>
